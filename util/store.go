@@ -77,6 +77,21 @@ func DeleteBirthday(name string) error {
 	return nil
 }
 
+func ReadAllBirthdays() ([]model.Birthday, error) {
+	b, err := os.ReadFile("birthdays.json")
+	if err != nil {
+		return nil, fmt.Errorf("no birthdays set yet")
+	}
+
+	var birthdays []model.Birthday
+	err = json.Unmarshal(b, &birthdays)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshaling birthdays.json: %v", err)
+	}
+
+	return birthdays, nil
+}
+
 func openBirthdayFile() (*os.File, error) {
 	f, err := os.OpenFile("birthdays.json", os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
