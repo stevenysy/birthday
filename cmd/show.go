@@ -1,5 +1,5 @@
 /*
-Copyright © 2024 NAME HERE <EMAIL ADDRESS>
+Copyright © 2024 Steven Yi stevenjxhc@gmail.com
 */
 package cmd
 
@@ -14,15 +14,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var month string
+
 // showCmd represents the show command
 var showCmd = &cobra.Command{
 	Use:   "show",
 	Short: "Show birthdays",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		birthdays, err := util.ReadAllBirthdays()
+		birthdays, err := getBirthdaysToPrint(month)
 		if err != nil {
 			fmt.Println(err)
+			return
 		}
 
 		sortByDaysAway(birthdays)
@@ -45,6 +48,28 @@ var showCmd = &cobra.Command{
 			}
 		}
 	},
+}
+
+func getBirthdaysToPrint(month string) ([]model.Birthday, error) {
+	var birthdays []model.Birthday
+	var err error
+
+	if month == "" {
+		birthdays, err = util.ReadAllBirthdays()
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		birthdays, err = util.ReadBirthdays(month)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if len(birthdays) == 0 {
+		return nil, fmt.Errorf("no birthdays found in %s 😢", month)
+	}
+	return birthdays, nil
 }
 
 func getNextBirthday(birthday model.Birthday) (nextBd time.Time, age int, daysAway int) {
@@ -92,6 +117,7 @@ func init() {
 	rootCmd.AddCommand(showCmd)
 
 	// Here you will define your flags and configuration settings.
+	showCmd.Flags().StringVarP(&month, "month", "m", "", "display birthdays of one month only")
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 )
 
 func StoreBirthday(birthday *model.Birthday) error {
@@ -90,6 +91,27 @@ func ReadAllBirthdays() ([]model.Birthday, error) {
 	}
 
 	return birthdays, nil
+}
+
+func ReadBirthdays(month string) ([]model.Birthday, error) {
+	allBds, err := ReadAllBirthdays()
+	if err != nil {
+		return nil, err
+	}
+
+	var birthdaysOfMonth []model.Birthday
+	filter, err := time.Parse("January", month)
+	if err != nil {
+		return nil, fmt.Errorf("incorrect month format, please enter a full month name")
+	}
+
+	for _, bd := range allBds {
+		if bd.Birthday.Month() == filter.Month() {
+			birthdaysOfMonth = append(birthdaysOfMonth, bd)
+		}
+	}
+
+	return birthdaysOfMonth, nil
 }
 
 func openBirthdayFile() (*os.File, error) {
