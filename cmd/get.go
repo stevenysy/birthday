@@ -7,6 +7,7 @@ import (
 	"birthday/model"
 	"birthday/util"
 	"fmt"
+	"sort"
 	"strconv"
 	"time"
 
@@ -24,17 +25,21 @@ var getCmd = &cobra.Command{
 			fmt.Println(err)
 		}
 
+		sortByDaysAway(birthdays)
+
 		for _, birthday := range birthdays {
 			nextBd, age, daysAway := getNextBirthday(birthday)
 
-			fmt.Printf("-  %s's %s birthday is %d days away, on %d/%d/%d\n",
-				birthday.Name,
-				addSuffix(age),
-				daysAway,
-				nextBd.Month(),
-				nextBd.Day(),
-				nextBd.Year(),
-			)
+			if daysAway == 0 {
+				fmt.Printf("-  %s's birthday is today! 🎂\n", fmt.Sprintf("\033[1m%s\033[0m", birthday.Name))
+			} else {
+				fmt.Printf("-  %s's %s birthday is %d days away, on %v\n",
+					fmt.Sprintf("\033[1m%s\033[0m", birthday.Name),
+					addSuffix(age),
+					daysAway,
+					nextBd.Format("Jan 2, 2006"),
+				)
+			}
 		}
 	},
 }
@@ -52,9 +57,19 @@ func getNextBirthday(birthday model.Birthday) (nextBd time.Time, age int, daysAw
 
 	age = nextBdYear - birthday.Birthday.Year()
 	nextBd = birthday.Birthday.AddDate(age, 0, 0)
-	daysAway = int(nextBd.Sub(time.Now()).Hours() / 24)
+	daysAway = int(nextBd.Sub(time.Now().UTC()).Hours() / 24)
 
 	return
+}
+
+func sortByDaysAway(birthdays []model.Birthday) []model.Birthday {
+	sort.Slice(birthdays, func(i, j int) bool {
+		_, _, days1 := getNextBirthday(birthdays[i])
+		_, _, days2 := getNextBirthday(birthdays[j])
+		return days1 < days2
+	})
+
+	return birthdays
 }
 
 func addSuffix(num int) string {
