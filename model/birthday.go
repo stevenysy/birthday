@@ -6,8 +6,8 @@ import (
 )
 
 type Birthday struct {
-	Name     string    `json:"name"`
-	Birthday time.Time `json:"birthday"`
+	Name string    `json:"name"`
+	Date time.Time `json:"birthday"`
 }
 
 func NewBirthday(name string, birthday string) (*Birthday, error) {
@@ -20,7 +20,7 @@ func NewBirthday(name string, birthday string) (*Birthday, error) {
 	}
 
 	return &Birthday{
-		Name:     name,
-		Birthday: t,
+		Name: name,
+		Date: t,
 	}, nil
 }
