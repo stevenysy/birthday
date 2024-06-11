@@ -20,13 +20,12 @@ func StoreBirthday(birthday *model.Birthday) error {
 		}
 	}(f)
 
+	// Read birthdays from file and unmarshal to birthdays slice if not empty
 	var birthdays []model.Birthday
-
 	fileBytes, err := os.ReadFile("birthdays.json")
 	if err != nil {
 		return fmt.Errorf("error reading birthdays.json: %v", err)
 	}
-
 	if len(fileBytes) > 0 {
 		err = json.Unmarshal(fileBytes, &birthdays)
 		if err != nil {
@@ -34,7 +33,15 @@ func StoreBirthday(birthday *model.Birthday) error {
 		}
 	}
 
+	// If the person already has a birthday set, we remove it to update it with the new birthday
+	for i, b := range birthdays {
+		if b.Name == birthday.Name {
+			birthdays = append(birthdays[:i], birthdays[i+1:]...)
+		}
+	}
 	birthdays = append(birthdays, *birthday)
+
+	// Write updated birthdays to file
 	err = writeToBirthdayFile(birthdays, f, false)
 	if err != nil {
 		return err
@@ -111,7 +118,7 @@ func ReadBirthdays(month string) ([]model.Birthday, error) {
 	}
 
 	for _, bd := range allBds {
-		if bd.Birthday.Month() == filter.Month() {
+		if bd.Date.Month() == filter.Month() {
 			birthdaysOfMonth = append(birthdaysOfMonth, bd)
 		}
 	}
