@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/user"
+	"path"
 	"time"
 )
 
@@ -22,7 +24,7 @@ func StoreBirthday(birthday *model.Birthday) error {
 
 	// Read birthdays from file and unmarshal to birthdays slice if not empty
 	var birthdays []model.Birthday
-	fileBytes, err := os.ReadFile("birthdays.json")
+	fileBytes, err := os.ReadFile(getBirthdayFileDir())
 	if err != nil {
 		return fmt.Errorf("error reading birthdays.json: %v", err)
 	}
@@ -62,7 +64,7 @@ func DeleteBirthday(name string) error {
 
 	var birthdays []model.Birthday
 
-	fileBytes, err := os.ReadFile("birthdays.json")
+	fileBytes, err := os.ReadFile(getBirthdayFileDir())
 	if err != nil {
 		return fmt.Errorf("error reading birthdays.json: %v", err)
 	}
@@ -87,7 +89,7 @@ func DeleteBirthday(name string) error {
 }
 
 func ReadAllBirthdays() ([]model.Birthday, error) {
-	b, err := os.ReadFile("birthdays.json")
+	b, err := os.ReadFile(getBirthdayFileDir())
 	if err != nil {
 		return nil, errors.ErrNoBirthdays
 	}
@@ -127,7 +129,7 @@ func ReadBirthdays(month string) ([]model.Birthday, error) {
 }
 
 func openBirthdayFile() (*os.File, error) {
-	f, err := os.OpenFile("birthdays.json", os.O_RDWR|os.O_CREATE, 0644)
+	f, err := os.OpenFile(getBirthdayFileDir(), os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
 		return nil, fmt.Errorf("error opening birthdays.json: %v", err)
 	}
@@ -162,4 +164,12 @@ func findBirthdayIndex(name string, birthdays []model.Birthday) int {
 		}
 	}
 	return -1
+}
+
+func getBirthdayFileDir() string {
+	usr, err := user.Current()
+	if err != nil {
+		panic(err)
+	}
+	return path.Join(usr.HomeDir, ".birthdays.json")
 }
