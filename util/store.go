@@ -1,6 +1,7 @@
 package util
 
 import (
+	"birthday/errors"
 	"birthday/model"
 	"encoding/json"
 	"fmt"
@@ -81,13 +82,17 @@ func DeleteBirthday(name string) error {
 func ReadAllBirthdays() ([]model.Birthday, error) {
 	b, err := os.ReadFile("birthdays.json")
 	if err != nil {
-		return nil, fmt.Errorf("no birthdays set yet")
+		return nil, errors.ErrNoBirthdays
 	}
 
 	var birthdays []model.Birthday
 	err = json.Unmarshal(b, &birthdays)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshaling birthdays.json: %v", err)
+	}
+
+	if len(birthdays) == 0 {
+		return nil, errors.ErrNoBirthdays
 	}
 
 	return birthdays, nil
