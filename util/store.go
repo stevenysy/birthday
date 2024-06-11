@@ -143,7 +143,7 @@ func writeToBirthdayFile(birthdays []model.Birthday, f *os.File, overwrite bool)
 	}
 
 	if overwrite {
-		f, err = os.Create("birthdays.json")
+		f, err = os.Create(getBirthdayFileDir())
 		if err != nil {
 			return fmt.Errorf("error truncating birthdays.json: %v", err)
 		}
