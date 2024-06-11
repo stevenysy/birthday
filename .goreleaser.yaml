@@ -27,6 +27,9 @@ brews:
   -
     name: birthday
     homepage: https://github.com/stevenysy/birthday
+    repository:
+      owner: stevenysy
+      name: homebrew-stevenysy
     commit_author:
       name: stevenysy
       email: stevenjxhc@gmail.com
