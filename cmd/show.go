@@ -76,15 +76,15 @@ func getNextBirthday(birthday model.Birthday) (nextBd time.Time, age int, daysAw
 	var nextBdYear int
 
 	curMonth := time.Now().Month()
-	birthdayMonth := birthday.Birthday.Month()
-	if birthdayMonth < curMonth || (birthdayMonth == curMonth && birthday.Birthday.Day() < time.Now().UTC().Day()) {
+	birthdayMonth := birthday.Date.Month()
+	if birthdayMonth < curMonth || (birthdayMonth == curMonth && birthday.Date.Day() < time.Now().UTC().Day()) {
 		nextBdYear = time.Now().Year() + 1
 	} else {
 		nextBdYear = time.Now().Year()
 	}
 
-	age = nextBdYear - birthday.Birthday.Year()
-	nextBd = birthday.Birthday.AddDate(age, 0, 0)
+	age = nextBdYear - birthday.Date.Year()
+	nextBd = birthday.Date.AddDate(age, 0, 0)
 	daysAway = int(nextBd.Sub(time.Now().UTC().Truncate(24*time.Hour)).Hours() / 24)
 
 	return
