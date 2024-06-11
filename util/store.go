@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func StoreBirthday(birthday *model.Birthday) error {
+func StoreBirthday(name string, date string) error {
 	f, err := openBirthdayFile()
 
 	defer func(f *os.File) {
@@ -23,7 +23,7 @@ func StoreBirthday(birthday *model.Birthday) error {
 	}(f)
 
 	// Read birthdays from file and unmarshal to birthdays slice if not empty
-	var birthdays []model.Birthday
+	birthdays := make(model.Birthdays)
 	fileBytes, err := os.ReadFile(getBirthdayFileDir())
 	if err != nil {
 		return fmt.Errorf("error reading birthdays.json: %v", err)
@@ -35,13 +35,11 @@ func StoreBirthday(birthday *model.Birthday) error {
 		}
 	}
 
-	// If the person already has a birthday set, we remove it to update it with the new birthday
-	for i, b := range birthdays {
-		if b.Name == birthday.Name {
-			birthdays = append(birthdays[:i], birthdays[i+1:]...)
-		}
+	t, err := parseBirthday(date)
+	if err != nil {
+		return err
 	}
-	birthdays = append(birthdays, *birthday)
+	birthdays[name] = *t
 
 	// Write updated birthdays to file
 	err = writeToBirthdayFile(birthdays, f, false)
@@ -62,7 +60,7 @@ func DeleteBirthday(name string) error {
 		}
 	}(f)
 
-	var birthdays []model.Birthday
+	birthdays := make(model.Birthdays)
 
 	fileBytes, err := os.ReadFile(getBirthdayFileDir())
 	if err != nil {
@@ -75,9 +73,7 @@ func DeleteBirthday(name string) error {
 			return fmt.Errorf("error unmarshaling birthdays.json: %v", err)
 		}
 
-		if deleteIx := findBirthdayIndex(name, birthdays); deleteIx != -1 {
-			birthdays = append(birthdays[:deleteIx], birthdays[deleteIx+1:]...)
-		}
+		delete(birthdays, name)
 
 		err = writeToBirthdayFile(birthdays, f, true)
 		if err != nil {
@@ -88,13 +84,13 @@ func DeleteBirthday(name string) error {
 	return nil
 }
 
-func ReadAllBirthdays() ([]model.Birthday, error) {
+func ReadAllBirthdays() (model.Birthdays, error) {
 	b, err := os.ReadFile(getBirthdayFileDir())
 	if err != nil {
 		return nil, errors.ErrNoBirthdays
 	}
 
-	var birthdays []model.Birthday
+	birthdays := make(model.Birthdays)
 	err = json.Unmarshal(b, &birthdays)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshaling birthdays.json: %v", err)
@@ -107,25 +103,36 @@ func ReadAllBirthdays() ([]model.Birthday, error) {
 	return birthdays, nil
 }
 
-func ReadBirthdays(month string) ([]model.Birthday, error) {
+func ReadBirthdays(month string) (model.Birthdays, error) {
 	allBds, err := ReadAllBirthdays()
 	if err != nil {
 		return nil, err
 	}
 
-	var birthdaysOfMonth []model.Birthday
+	birthdaysOfMonth := make(model.Birthdays)
 	filter, err := time.Parse("January", month)
 	if err != nil {
 		return nil, fmt.Errorf("incorrect month format, please enter a full month name")
 	}
 
-	for _, bd := range allBds {
-		if bd.Date.Month() == filter.Month() {
-			birthdaysOfMonth = append(birthdaysOfMonth, bd)
+	for key, value := range allBds {
+		if value.Month() == filter.Month() {
+			birthdaysOfMonth[key] = value
 		}
 	}
 
 	return birthdaysOfMonth, nil
+}
+
+func parseBirthday(birthday string) (*time.Time, error) {
+	t, err := time.Parse("01/02/2006", birthday)
+	if err != nil {
+		t, err = time.Parse("1/2/2006", birthday)
+		if err != nil {
+			return nil, fmt.Errorf("unrecognized date format in birthday: %w", err)
+		}
+	}
+	return &t, nil
 }
 
 func openBirthdayFile() (*os.File, error) {
@@ -136,7 +143,7 @@ func openBirthdayFile() (*os.File, error) {
 	return f, nil
 }
 
-func writeToBirthdayFile(birthdays []model.Birthday, f *os.File, overwrite bool) error {
+func writeToBirthdayFile(birthdays model.Birthdays, f *os.File, overwrite bool) error {
 	b, err := json.Marshal(birthdays)
 	if err != nil {
 		return fmt.Errorf("error marshaling birthdays.json: %v", err)
@@ -155,15 +162,6 @@ func writeToBirthdayFile(birthdays []model.Birthday, f *os.File, overwrite bool)
 	}
 
 	return nil
-}
-
-func findBirthdayIndex(name string, birthdays []model.Birthday) int {
-	for i, b := range birthdays {
-		if b.Name == name {
-			return i
-		}
-	}
-	return -1
 }
 
 func getBirthdayFileDir() string {

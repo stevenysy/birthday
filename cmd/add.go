@@ -4,7 +4,6 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"birthday/model"
 	"birthday/util"
 	"fmt"
 	"github.com/spf13/cobra"
@@ -17,12 +16,7 @@ var addCmd = &cobra.Command{
 	Short: "Add a birthday",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		birthday, err := model.NewBirthday(args[0], args[1])
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		err = util.StoreBirthday(birthday)
+		err := util.StoreBirthday(args[0], args[1])
 		if err != nil {
 			fmt.Println(err)
 		}

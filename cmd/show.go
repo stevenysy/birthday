@@ -28,30 +28,12 @@ var showCmd = &cobra.Command{
 			return
 		}
 
-		sortByDaysAway(birthdays)
-
-		for _, birthday := range birthdays {
-			nextBd, age, daysAway := getNextBirthday(birthday)
-
-			if daysAway == 0 {
-				fmt.Printf("-  %s's %s birthday is today! 🎂\n",
-					fmt.Sprintf("\033[1m%s\033[0m", birthday.Name),
-					addSuffix(age),
-				)
-			} else {
-				fmt.Printf("-  %s's %s birthday is %d days away, on %v\n",
-					fmt.Sprintf("\033[1m%s\033[0m", birthday.Name),
-					addSuffix(age),
-					daysAway,
-					nextBd.Format("Jan 2, 2006"),
-				)
-			}
-		}
+		printSortedByDaysAway(birthdays)
 	},
 }
 
-func getBirthdaysToPrint(month string) ([]model.Birthday, error) {
-	var birthdays []model.Birthday
+func getBirthdaysToPrint(month string) (model.Birthdays, error) {
+	birthdays := make(model.Birthdays)
 	var err error
 
 	if month == "" {
@@ -72,32 +54,63 @@ func getBirthdaysToPrint(month string) ([]model.Birthday, error) {
 	return birthdays, nil
 }
 
-func getNextBirthday(birthday model.Birthday) (nextBd time.Time, age int, daysAway int) {
+func getNextBirthday(birthday time.Time) (nextBd time.Time, age int, daysAway int) {
 	var nextBdYear int
 
 	curMonth := time.Now().Month()
-	birthdayMonth := birthday.Date.Month()
-	if birthdayMonth < curMonth || (birthdayMonth == curMonth && birthday.Date.Day() < time.Now().UTC().Day()) {
+	birthdayMonth := birthday.Month()
+	if birthdayMonth < curMonth || (birthdayMonth == curMonth && birthday.Day() < time.Now().UTC().Day()) {
 		nextBdYear = time.Now().Year() + 1
 	} else {
 		nextBdYear = time.Now().Year()
 	}
 
-	age = nextBdYear - birthday.Date.Year()
-	nextBd = birthday.Date.AddDate(age, 0, 0)
+	age = nextBdYear - birthday.Year()
+	nextBd = birthday.AddDate(age, 0, 0)
 	daysAway = int(nextBd.Sub(time.Now().UTC().Truncate(24*time.Hour)).Hours() / 24)
 
 	return
 }
 
-func sortByDaysAway(birthdays []model.Birthday) []model.Birthday {
-	sort.Slice(birthdays, func(i, j int) bool {
-		_, _, days1 := getNextBirthday(birthdays[i])
-		_, _, days2 := getNextBirthday(birthdays[j])
-		return days1 < days2
+type bdInfo struct {
+	Name        string
+	NextBd      time.Time
+	Age         int
+	DaysUntilBd int
+}
+
+func printSortedByDaysAway(birthdays model.Birthdays) {
+	var temp []bdInfo
+
+	for name, bd := range birthdays {
+		nextBd, age, days := getNextBirthday(bd)
+		temp = append(temp, bdInfo{
+			Name:        name,
+			NextBd:      nextBd,
+			Age:         age,
+			DaysUntilBd: days,
+		})
+	}
+
+	sort.Slice(temp, func(i, j int) bool {
+		return temp[i].DaysUntilBd < temp[j].DaysUntilBd
 	})
 
-	return birthdays
+	for _, birthday := range temp {
+		if birthday.DaysUntilBd == 0 {
+			fmt.Printf("-  %s's %s birthday is today! 🎂\n",
+				fmt.Sprintf("\033[1m%s\033[0m", birthday.Name),
+				addSuffix(birthday.Age),
+			)
+		} else {
+			fmt.Printf("-  %s's %s birthday is %d days away, on %v\n",
+				fmt.Sprintf("\033[1m%s\033[0m", birthday.Name),
+				addSuffix(birthday.Age),
+				birthday.DaysUntilBd,
+				birthday.NextBd.Format("Jan 2, 2006"),
+			)
+		}
+	}
 }
 
 func addSuffix(num int) string {
