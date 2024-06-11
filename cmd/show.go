@@ -77,7 +77,7 @@ func getNextBirthday(birthday model.Birthday) (nextBd time.Time, age int, daysAw
 
 	curMonth := time.Now().Month()
 	birthdayMonth := birthday.Birthday.Month()
-	if birthdayMonth < curMonth || (birthdayMonth == curMonth && birthday.Birthday.Day() < time.Now().Day()) {
+	if birthdayMonth < curMonth || (birthdayMonth == curMonth && birthday.Birthday.Day() < time.Now().UTC().Day()) {
 		nextBdYear = time.Now().Year() + 1
 	} else {
 		nextBdYear = time.Now().Year()
@@ -85,7 +85,7 @@ func getNextBirthday(birthday model.Birthday) (nextBd time.Time, age int, daysAw
 
 	age = nextBdYear - birthday.Birthday.Year()
 	nextBd = birthday.Birthday.AddDate(age, 0, 0)
-	daysAway = int(nextBd.Sub(time.Now().UTC()).Hours() / 24)
+	daysAway = int(nextBd.Sub(time.Now().UTC().Truncate(24*time.Hour)).Hours() / 24)
 
 	return
 }
@@ -116,14 +116,5 @@ func addSuffix(num int) string {
 func init() {
 	rootCmd.AddCommand(showCmd)
 
-	// Here you will define your flags and configuration settings.
 	showCmd.Flags().StringVarP(&month, "month", "m", "", "display birthdays of one month only")
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// showCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// showCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
